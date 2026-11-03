@@ -210,6 +210,8 @@ textarea.in { min-height: 90px; resize: vertical; }
 /* capture sheet */
 .sheet-bg { position: fixed; inset: 0; background: rgba(8, 9, 12, 0.5); backdrop-filter: blur(3px); z-index: 20; display: flex; align-items: flex-end; justify-content: center; }
 .sheet { background: var(--paper); width: 100%; max-width: 560px; border-radius: 28px 28px 0 0; padding: 18px max(20px, env(safe-area-inset-right, 0px)) calc(24px + env(safe-area-inset-bottom, 0px)) max(20px, env(safe-area-inset-left, 0px)); max-height: 90%; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; }
+/* Children keep their natural height; the sheet scrolls instead of squashing the photo strip */
+.sheet > * { flex-shrink: 0; }
 .sheet h2 { margin: 0; font-family: var(--display); font-weight: 700; letter-spacing: -0.01em; font-size: 22px; line-height: 1.25; }
 .sheet h2 span { color: var(--c); }
 .sheet .grab { width: 40px; height: 5px; border-radius: 5px; background: var(--paper-2); align-self: center; margin-top: -6px; }
