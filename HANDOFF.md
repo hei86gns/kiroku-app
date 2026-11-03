@@ -1,6 +1,6 @@
 # 記録アプリ（kiroku-app）引き継ぎメモ
 
-最終更新：2026-11-03（本実装の初版コードが完成。Supabase の準備と実機確認はまだ）
+最終更新：2026-11-03（初版を公開済み。iPhone での実機確認待ち）
 
 ## 今どこまで進んだか
 | 段階 | 状態 |
@@ -9,9 +9,10 @@
 | 実装計画 | 済み → `docs/plan-v1.md`（承認済み） |
 | 触れるモック（見本） | 済み・ユーザーOK → `docs/mockup.html` ／ 公開版 https://claude.ai/artifact/511ofcB1hrZz1uNi2ngXSj |
 | 本実装（初版）コード | **済み**（計画の手順2〜5）。`npm run build` / `npm run lint` 通過 |
-| Supabase に表を作る | **未**：ユーザーが `supabase/schema.sql` を SQL Editor で実行する |
-| 実際に動かして確認 | **未**：表ができたら `npm run dev` でログイン→登録→オフライン送信を確認 |
-| GitHub 公開（手順6） | **未**：リポジトリの公開/非公開をユーザーに確認してから |
+| Supabase に表を作る | 済み（プロジェクトB = Supabase 上の名前は「kakeibo」） |
+| 手元での動作確認 | 済み：ログイン、3コレクション自動作成、写真登録（Storage に .jpg/.thumb.jpg）、オフライン登録→再接続で自動送信 |
+| GitHub 公開（手順6） | 済み：https://github.com/hei86gns/kiroku-app（公開）→ https://hei86gns.github.io/kiroku-app/ |
+| iPhone で実機確認 | **未** |
 
 Git：`main` ブランチ。`.env` は Kakeibo と同じプロジェクトBの値をコピー済み（Git には入らない）。
 
@@ -72,12 +73,14 @@ supabase/schema.sql     SQL Editor に貼って実行する
 - デザインには「ワクワクするけどプロらしい」ものを求めている
 
 ## 次にやること
-1. **ユーザー**：Supabase（プロジェクトB）の SQL Editor で `supabase/schema.sql` を実行
-2. `npm run dev` → ログイン → 3コレクションが自動作成されるか確認
-3. 写真を選んで登録 → Storage に縮小済み JPEG とサムネ、`kiroku_records` に行ができるか。縦向き写真が横にならないか
-4. DevTools でオフラインにして登録 → 「未送信」表示 → オンラインに戻すと自動送信され、重複しないか
-5. 計画の手順6：GitHub リポジトリ作成（**公開/非公開をユーザーに確認**）→ Secrets に `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` → push で自動公開 → iPhone でホーム画面に追加して確認
-6. 気になっている点（実機確認後に判断）：
+1. iPhone でホーム画面に追加 → 撮影して登録、縦向き写真の向き、オフライン登録を確認
+2. ユーザー作業（任意）：Supabase の Auth → URL Configuration → Redirect URLs に `https://hei86gns.github.io/kiroku-app/` を追加（パスワードリセット用）
+3. 段階2（Notion からの取り込み）の計画
+4. 気になっている点（実機確認後に判断）：
    - JS が約500KB（gzip 143KB）。Supabase ライブラリが大きいため。必要なら画面ごとに分割読み込み
    - 項目を削除しても、入力済みの値はデータに残る（画面に出ないだけ）
    - 戻るジェスチャー（ブラウザの履歴）には未対応。画面左上の「‹」で戻る
+
+## メモ
+- この Mac には `gh`（GitHub CLI）が入っていない。push は Keychain の合鍵「mac-keychain」（repo + workflow 権限）で行う
+- 手元で画面確認するとき：Mac の Wi-Fi を切るとオフラインの確認ができる（開発者ツール不要）
