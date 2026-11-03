@@ -1,6 +1,6 @@
 # 記録アプリ（kiroku-app）引き継ぎメモ
 
-最終更新：2026-11-03（初版を公開済み。iPhone での実機確認待ち）
+最終更新：2026-11-03（初版を公開済み。次は iPhone での実機確認 → 段階2）
 
 ## 今どこまで進んだか
 | 段階 | 状態 |
@@ -75,12 +75,16 @@ supabase/schema.sql     SQL Editor に貼って実行する
 ## 次にやること
 1. iPhone でホーム画面に追加 → 撮影して登録、縦向き写真の向き、オフライン登録を確認
 2. ユーザー作業（任意）：Supabase の Auth → URL Configuration → Redirect URLs に `https://hei86gns.github.io/kiroku-app/` を追加（パスワードリセット用）
-3. 段階2（Notion からの取り込み）の計画
+3. 段階2（Notion からの取り込み）の計画。方針は「一度だけ取り込む」（ユーザーに説明済み。Notion を直接のぞく方式は不採用）
+   - Notion の件数（ユーザーの見込み）：買ったもの 50〜100 / 読書記録 200以下 / レシピ 100〜200 → 合計 約350〜500件
+   - 写真の量の目安：1枚あたり約230KB（本体＋一覧用）。Supabase 無料枠のストレージ 1GB はプロジェクトB の他アプリと共有なので、取り込み前に空き容量を確認する
+   - 取り込み方法（CSV 書き出し or Notion API）は、写真も運べる API を第一候補に検討
 4. 気になっている点（実機確認後に判断）：
    - JS が約500KB（gzip 143KB）。Supabase ライブラリが大きいため。必要なら画面ごとに分割読み込み
    - 項目を削除しても、入力済みの値はデータに残る（画面に出ないだけ）
    - 戻るジェスチャー（ブラウザの履歴）には未対応。画面左上の「‹」で戻る
 
 ## メモ
+- GitHub Secrets の `VITE_SUPABASE_ANON_KEY` は一度、先頭1文字が欠けた状態で登録されていた（修正済み）。Secrets を触るときは画面左上のリポジトリ名（kiroku-app / Kakeibo-app の取り違え）に注意。設定ページは直リンク https://github.com/hei86gns/kiroku-app/settings/secrets/actions を渡すと確実
 - この Mac には `gh`（GitHub CLI）が入っていない。push は Keychain の合鍵「mac-keychain」（repo + workflow 権限）で行う
 - 手元で画面確認するとき：Mac の Wi-Fi を切るとオフラインの確認ができる（開発者ツール不要）
