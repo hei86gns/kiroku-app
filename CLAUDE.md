@@ -7,3 +7,9 @@
 - デザインの見本：`docs/mockup.html`（本実装の見た目の基準）
 
 大きな変更（データ構造、保存方式、認証まわりなど）をしたら、`HANDOFF.md` も更新してください。
+
+## よく使うコマンド
+- `npm run dev`：手元で起動（http://localhost:5173/kiroku-app/）
+- `npm run build`：型チェック＋本番用ビルド
+- `npm run lint`：コードの書き方チェック（oxlint）
+- データベースの変更は `supabase/schema.sql` を更新し、ユーザーに SQL Editor で実行してもらう

@@ -51,9 +51,10 @@ export function useKiroku(userId: string) {
     try {
       // Keep going while new changes arrive during a send
       for (let i = 0; i < 5; i++) {
-        const n = await flush(userId)
-        total += n
-        if (n === 0 || (await refreshPending()) === 0) break
+        // flush() may hand back a send that started before the newest change was queued,
+        // so check what is still waiting rather than trusting its count
+        total += await flush(userId)
+        if ((await refreshPending()) === 0) break
       }
       setSync('synced')
     } catch (err) {
