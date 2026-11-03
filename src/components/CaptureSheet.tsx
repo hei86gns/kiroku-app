@@ -96,11 +96,14 @@ export default function CaptureSheet({ askCollection, onClose }: { askCollection
               <div className="strip">
                 {files.map((x) => (
                   <div className="im" key={x.ref.path}>
-                    <img src={previews.get(x.ref.path)} alt="" />
-                    <div className="resinfo">{x.info}</div>
-                    <div className="ctl" style={{ justifyContent: 'flex-end' }}>
-                      <button type="button" className="x" aria-label="外す" onClick={() => setFiles((xs) => xs.filter((y) => y !== x))}>×</button>
+                    {/* The × sits on the photo itself, not over the size note below it */}
+                    <div style={{ position: 'relative' }}>
+                      <img src={previews.get(x.ref.path)} alt="" />
+                      <div className="ctl" style={{ justifyContent: 'flex-end' }}>
+                        <button type="button" className="x" aria-label="外す" onClick={() => setFiles((xs) => xs.filter((y) => y !== x))}>×</button>
+                      </div>
                     </div>
+                    <div className="resinfo">{x.info}</div>
                   </div>
                 ))}
               </div>
