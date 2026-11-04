@@ -1,6 +1,6 @@
 # 記録アプリ（kiroku-app）引き継ぎメモ
 
-最終更新：2026-11-04（初版を公開済み。段階2：お試し変換まで完了、次は本番取り込み）
+最終更新：2026-11-04（初版を公開済み。段階2：Notion 取り込み実行済み、アプリでの確認待ち）
 
 ## 今どこまで進んだか
 | 段階 | 状態 |
@@ -75,7 +75,7 @@ supabase/schema.sql     SQL Editor に貼って実行する
 ## 次にやること
 1. iPhone でホーム画面に追加 → 撮影して登録、縦向き写真の向き、オフライン登録を確認
 2. ユーザー作業（任意）：Supabase の Auth → URL Configuration → Redirect URLs に `https://hei86gns.github.io/kiroku-app/` を追加（パスワードリセット用）
-3. 段階2（Notion からの取り込み）：計画 `docs/plan-v2-notion-import.md`（承認済み）。**本番取り込み（`npm run import`）を作成済み → ユーザーがターミナルで実行（メール・パスワード入力が必要）→ アプリで件数・写真・並び順を確認**
+3. 段階2（Notion からの取り込み）：計画 `docs/plan-v2-notion-import.md`（承認済み）。**本番取り込み実行済み（2026-11-04、583件、失敗0）→ 次はアプリで件数・写真・並び順を確認**（再実行しても取り込み済みは飛ばすので安全）
    - 準備済み：Notion の「コネクション」kiroku-import（読み取りのみ・ユーザー情報なし）を **HeihachiroさんのNotion** ワークスペースに作成し、3DBに接続。鍵とDB ID は `.env.import`（Git対象外）に記入済み
      - 注意：ユーザーの Notion は2アカウントある。DBがあるのは Heihachiro 側（デスクトップアプリ）。ブラウザ側の OkamuraNoriaki ワークスペースにも kiroku-import を作ってしまったが未使用
      - Notion の画面では「インテグレーション」→「コネクション」、ページへの接続は「•••」→「詳細」→「接続」に変わっている
