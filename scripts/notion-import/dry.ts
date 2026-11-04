@@ -4,7 +4,7 @@
 //   npm run import:dry
 
 import { mkdir, writeFile } from 'node:fs/promises'
-import { alignToOptions, convertPage, mergeOptions, plain, unmappedProps, type Converted, type DbKey } from './convert.ts'
+import { alignToOptions, convertPage, isSkipped, mergeOptions, plain, unmappedProps, type Converted, type DbKey } from './convert.ts'
 import { extOf, download, shrink } from './images.ts'
 import { createClient, loadEnv, mapLimit, type NotionFile } from './notion.ts'
 
@@ -50,7 +50,7 @@ let shrunkBytes = 0, shrunkCount = 0, totalImages = 0
 
 for (const [key, dbId] of Object.entries(env.dbs) as [DbKey, string][]) {
   const db = await notion.database(dbId)
-  const pages = (await notion.queryAll(dbId)).filter((p) => !p.archived && !p.in_trash)
+  const pages = (await notion.queryAll(dbId)).filter((p) => !p.archived && !p.in_trash && !isSkipped(p.id))
   console.log(`\n══════ ${plain(db.title)}（${key}）${pages.length}件 ══════`)
 
   process.stdout.write('本文を読んでいます ')

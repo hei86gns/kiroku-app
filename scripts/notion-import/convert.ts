@@ -88,6 +88,14 @@ export const MAPPINGS: Record<DbKey, Mapping> = {
   },
 }
 
+/** Nearly empty pages the user chose not to import (2026-11-04). Notion page ids without dashes. */
+export const SKIP_PAGES = new Set([
+  '3a36579a5c2481ebad7ce8e713fdaf54', // Recipe「ゆりあTOEIC」：ファイル添付だけ
+  '3636579a5c2480928b73d0bdcdfd041b', // 買ったもの：名前なし、カテゴリーだけ
+  '2b56579a5c2480829546f7e77ba2031c', // 買ったもの：空
+])
+export const isSkipped = (pageId: string) => SKIP_PAGES.has(pageId.replaceAll('-', ''))
+
 export type Value = string | number | string[]
 
 export interface Converted {

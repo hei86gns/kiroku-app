@@ -9,7 +9,8 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "import:inspect": "node scripts/notion-import/inspect.ts",
-    "import:dry": "node scripts/notion-import/dry.ts"
+    "import:dry": "node scripts/notion-import/dry.ts",
+    "import": "node scripts/notion-import/import.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.108.2",

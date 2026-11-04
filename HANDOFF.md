@@ -75,7 +75,7 @@ supabase/schema.sql     SQL Editor に貼って実行する
 ## 次にやること
 1. iPhone でホーム画面に追加 → 撮影して登録、縦向き写真の向き、オフライン登録を確認
 2. ユーザー作業（任意）：Supabase の Auth → URL Configuration → Redirect URLs に `https://hei86gns.github.io/kiroku-app/` を追加（パスワードリセット用）
-3. 段階2（Notion からの取り込み）：計画 `docs/plan-v2-notion-import.md`（承認済み）。**お試し変換（`npm run import:dry`）まで完了 → 次は 本番取り込み（`npm run import`）を作る**
+3. 段階2（Notion からの取り込み）：計画 `docs/plan-v2-notion-import.md`（承認済み）。**本番取り込み（`npm run import`）を作成済み → ユーザーがターミナルで実行（メール・パスワード入力が必要）→ アプリで件数・写真・並び順を確認**
    - 準備済み：Notion の「コネクション」kiroku-import（読み取りのみ・ユーザー情報なし）を **HeihachiroさんのNotion** ワークスペースに作成し、3DBに接続。鍵とDB ID は `.env.import`（Git対象外）に記入済み
      - 注意：ユーザーの Notion は2アカウントある。DBがあるのは Heihachiro 側（デスクトップアプリ）。ブラウザ側の OkamuraNoriaki ワークスペースにも kiroku-import を作ってしまったが未使用
      - Notion の画面では「インテグレーション」→「コネクション」、ページへの接続は「•••」→「詳細」→「接続」に変わっている
@@ -102,7 +102,10 @@ supabase/schema.sql     SQL Editor に貼って実行する
      - 縮小テスト 49枚すべて成功（HEIC も psd も外部リンクも OK）。平均 117KB/枚 → 全1269枚で約145MB
      - 選択肢の追加：レシピ カテゴリ+15・出典+14、買ったもの カテゴリー+12・購入店+30（大文字小文字違いはアプリ側の表記に寄せる：amazon→Amazon）
      - 読書記録で書名が空・著者欄に書名が入ったページ1件 → 著者欄の文字を書名にする
-     - 中身がほぼ空のページ3件（Recipe「ゆりあTOEIC」＝ファイル添付だけ、買ったもの 名前なし2件）の扱いはユーザー確認中
+     - 中身がほぼ空のページ3件（Recipe「ゆりあTOEIC」、買ったもの 名前なし2件）は取り込まない（`convert.ts` の `SKIP_PAGES`）→ 取り込み対象 583件
+   - **本番取り込み `import.ts`**：本人としてログイン → 選択肢を追加 → 1ページずつ「Notion を読み直す → 写真を縮小・アップロード → レコード upsert」
+     - レコード ID ＝ Notion のページ ID。写真は `{user}/{collection}/{record}/{項目}-{n}.jpg`（やり直しても上書き）
+     - 取り込み済み（notion_page_id あり）は飛ばす。失敗・注意は `scripts/notion-import/out/import-log.json`
 4. 気になっている点（実機確認後に判断）：
    - JS が約500KB（gzip 143KB）。Supabase ライブラリが大きいため。必要なら画面ごとに分割読み込み
    - 項目を削除しても、入力済みの値はデータに残る（画面に出ないだけ）

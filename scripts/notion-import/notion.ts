@@ -69,6 +69,8 @@ export function createClient(token: string) {
   return {
     database: (id: string) => call<Database>('GET', `/databases/${id}`),
 
+    page: (id: string) => call<Page>('GET', `/pages/${id}`),
+
     async queryAll(id: string): Promise<Page[]> {
       const pages: Page[] = []
       let cursor: string | undefined
