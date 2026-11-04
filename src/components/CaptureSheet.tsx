@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useApp } from '../context'
 import { maxSideFor, newId } from '../lib/fields'
 import { prepareImages, toNewImages, type PreparedImage } from '../lib/image'
+import { hasPointer, useDropImages, usePasteImages } from '../lib/pasteDrop'
 import type { Collection, KRecord } from '../lib/types'
 import { CollectionIcon, IcCam } from './Icons'
 
@@ -41,6 +42,10 @@ export default function CaptureSheet({ askCollection, onClose }: { askCollection
       return next
     })
   }
+
+  const canAdd = !!c && !!field
+  usePasteImages((list) => void pick(list), canAdd)
+  const drop = useDropImages((list) => void pick(list), canAdd)
 
   const save = async () => {
     if (!c || !title.trim()) return
@@ -108,7 +113,10 @@ export default function CaptureSheet({ askCollection, onClose }: { askCollection
                 ))}
               </div>
             ) : (
-              <p className="hint" style={{ margin: '-4px 0 0' }}>複数枚まとめて選べます。選んだ写真はこの場で自動的に縮小されます。</p>
+              <p className="hint" style={{ margin: '-4px 0 0' }}>
+                複数枚まとめて選べます。選んだ写真はこの場で自動的に縮小されます。
+                {hasPointer() && 'スクショは ⌘V で貼り付け、ファイルはここへドラッグでも入れられます。'}
+              </p>
             )}
             <div>
               <label className="lbl" htmlFor="capfield">写真を入れる項目</label>
@@ -133,7 +141,7 @@ export default function CaptureSheet({ askCollection, onClose }: { askCollection
 
   return (
     <div className="sheet-bg" onClick={(e) => { if (e.target === e.currentTarget) close() }}>
-      <div className="sheet" role="dialog" aria-label="登録" data-c={c?.theme ?? 'all'}>
+      <div className={`sheet ${drop.over ? 'dropping' : ''}`} role="dialog" aria-label="登録" data-c={c?.theme ?? 'all'} {...drop.props}>
         <div className="grab" />
         {inner}
       </div>

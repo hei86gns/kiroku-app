@@ -300,3 +300,7 @@ mark { background: color-mix(in srgb, var(--c) 22%, transparent); color: var(--i
 .iconpick button { width: 44px; height: 44px; border-radius: 12px; border: 1px solid var(--line); background: var(--paper); color: var(--ink-2); display: grid; place-items: center; }
 .iconpick button.on { background: var(--c); color: var(--on-c); border-color: var(--c); }
 .ver { font-family: var(--mono); font-size: 10px; color: var(--muted); text-align: center; margin-top: 28px; }
+
+/* Drop target while dragging a picture over it (paste / drag-and-drop) */
+.dropping { outline: 2px dashed var(--c); outline-offset: 4px; border-radius: 14px; }
+.sheet.dropping { outline-offset: -8px; }

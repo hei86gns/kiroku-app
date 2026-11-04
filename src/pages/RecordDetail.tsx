@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useApp } from '../context'
 import { asImages, coverOf, durationOf, fmtDate, maxSideFor, numbering, recordNo, tagsInUse } from '../lib/fields'
 import { prepareImages, toNewImages } from '../lib/image'
+import { hasPointer, useDropImages, usePasteImages } from '../lib/pasteDrop'
 import type { FieldDef, FieldValue, ImageRef, KRecord } from '../lib/types'
 import { Header, Img, Pend } from '../components/common'
 import { FieldDisplay, FieldEditor } from '../components/FieldInputs'
@@ -14,6 +15,7 @@ function ImageStrip({ images, editing, onZoom, onChange, onAdd }: {
   onChange: (next: ImageRef[]) => void
   onAdd: (files: File[]) => void
 }) {
+  const drop = useDropImages(onAdd, editing)
   if (!images.length && !editing) return <span className="empty">なし</span>
   const move = (i: number, d: number) => {
     const j = i + d
@@ -23,7 +25,7 @@ function ImageStrip({ images, editing, onZoom, onChange, onAdd }: {
     onChange(next)
   }
   return (
-    <div className="strip">
+    <div className={`strip ${drop.over ? 'dropping' : ''}`} {...drop.props}>
       {images.map((im, i) => (
         <div className="im" key={im.path}>
           <Img image={im} thumb onClick={() => onZoom(i)} />
@@ -62,6 +64,27 @@ export default function RecordDetail({ recordId, startEditing, justSaved, onBack
   const [busy, setBusy] = useState(false)
   const nos = useMemo(() => (c ? numbering(c, records) : new Map<string, number>()), [c, records])
 
+  /** Shrinks and adds pictures to a field. Works outside edit mode too (paste / drop on the photo). */
+  const addImages = async (f: FieldDef, files: File[]) => {
+    const base = editing && draft ? draft : record
+    if (!base || !c || !files.length) return
+    setBusy(true)
+    const { images, failed } = await prepareImages(files, maxSideFor(f), `${userId}/${c.id}/${base.id}`)
+    setBusy(false)
+    if (failed) toast('読み込めない画像がありました。JPEG か PNG で試してください。')
+    if (!images.length) return
+    const next = { ...base, data: { ...base.data, [f.key]: [...asImages(base.data[f.key]), ...images.map((i) => i.ref)] } }
+    if (editing) setDraft(next)
+    await saveRecord(next, toNewImages(images))
+    toast(`${f.label}に${images.length}枚追加しました`)
+  }
+
+  // ⌘V / drop on the big photo → the cover field (読書記録ならカバー)
+  const coverField = c && (c.fields.find((x) => x.key === c.cover_field_key && x.type === 'image') ?? c.fields.find((x) => x.type === 'image'))
+  const addToCover = (files: File[]) => { if (coverField) void addImages(coverField, files) }
+  usePasteImages(addToCover, !!coverField)
+  const heroDrop = useDropImages(addToCover, !!coverField)
+
   // Autosave edits shortly after typing stops
   const savedRef = useRef(record)
   useEffect(() => { savedRef.current = record }, [record])
@@ -89,19 +112,6 @@ export default function RecordDetail({ recordId, startEditing, justSaved, onBack
     setEditing(false)
     setDraft(null)
     toast(navigator.onLine ? '保存しました' : '端末に保存しました（未送信）')
-  }
-
-  const addImages = async (f: FieldDef, files: File[]) => {
-    if (!draft || !files.length) return
-    setBusy(true)
-    const { images, failed } = await prepareImages(files, maxSideFor(f), `${userId}/${c.id}/${record.id}`)
-    setBusy(false)
-    if (failed) toast('読み込めない画像がありました。JPEG か PNG で試してください。')
-    if (!images.length) return
-    const next = { ...draft, data: { ...draft.data, [f.key]: [...asImages(draft.data[f.key]), ...images.map((i) => i.ref)] } }
-    setDraft(next)
-    await saveRecord(next, toNewImages(images))
-    toast(`${images.length}枚追加しました`)
   }
 
   const addOption = (f: FieldDef, opt: string) => {
@@ -172,7 +182,7 @@ export default function RecordDetail({ recordId, startEditing, justSaved, onBack
       )}
       <div className="dlay">
         <div className="dleft">
-          <div className="dhero">
+          <div className={`dhero ${heroDrop.over ? 'dropping' : ''}`} {...heroDrop.props}>
             <Img image={cover} className="hero" fallback={r.title} onClick={cover ? zoomCover : undefined} />
             {cover && <span className="zoomhint">TAP TO ZOOM</span>}
           </div>
@@ -195,6 +205,9 @@ export default function RecordDetail({ recordId, startEditing, justSaved, onBack
             </>
           )}
           {busy && <p className="hint">縮小しています…</p>}
+          {editing && coverField && hasPointer() && (
+            <p className="hint">スクショは ⌘V で「{coverField.label}」に貼り付けられます。ほかの画像項目へはドラッグで追加できます。</p>
+          )}
           <div className="fields">{rows}</div>
           {editing && (
             <>
