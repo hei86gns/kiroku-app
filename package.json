@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "import:inspect": "node scripts/notion-import/inspect.ts"
+    "import:inspect": "node scripts/notion-import/inspect.ts",
+    "import:dry": "node scripts/notion-import/dry.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.108.2",
@@ -22,6 +23,7 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.2",
     "oxlint": "^1.69.0",
+    "sharp": "^0.35.5",
     "typescript": "~6.0.2",
     "vite": "^8.1.0",
     "vite-plugin-pwa": "^1.2.0"

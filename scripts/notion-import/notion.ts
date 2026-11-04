@@ -99,6 +99,17 @@ export function createClient(token: string) {
       } while (cursor)
       return blocks
     },
+
+    /** Page body with nested blocks attached as `children` (child pages are not opened). */
+    async childrenDeep(id: string): Promise<Block[]> {
+      const blocks = await this.childrenAll(id)
+      for (const b of blocks) {
+        if (b.has_children && b.type !== 'child_page' && b.type !== 'child_database') {
+          b.children = await this.childrenDeep(b.id)
+        }
+      }
+      return blocks
+    },
   }
 }
 

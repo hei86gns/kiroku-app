@@ -28,3 +28,6 @@ dist-ssr
 .env.local
 .env.*.local
 .env.import
+
+# Notion import output (contains signed Notion URLs)
+scripts/notion-import/out

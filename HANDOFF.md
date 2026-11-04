@@ -1,6 +1,6 @@
 # 記録アプリ（kiroku-app）引き継ぎメモ
 
-最終更新：2026-11-04（初版を公開済み。段階2：Notion の下見まで完了、次はお試し変換）
+最終更新：2026-11-04（初版を公開済み。段階2：お試し変換まで完了、次は本番取り込み）
 
 ## 今どこまで進んだか
 | 段階 | 状態 |
@@ -75,7 +75,7 @@ supabase/schema.sql     SQL Editor に貼って実行する
 ## 次にやること
 1. iPhone でホーム画面に追加 → 撮影して登録、縦向き写真の向き、オフライン登録を確認
 2. ユーザー作業（任意）：Supabase の Auth → URL Configuration → Redirect URLs に `https://hei86gns.github.io/kiroku-app/` を追加（パスワードリセット用）
-3. 段階2（Notion からの取り込み）：計画 `docs/plan-v2-notion-import.md`（承認済み）。**下見（inspect）まで完了 → 次は お試し変換（`npm run import:dry`）を作る**
+3. 段階2（Notion からの取り込み）：計画 `docs/plan-v2-notion-import.md`（承認済み）。**お試し変換（`npm run import:dry`）まで完了 → 次は 本番取り込み（`npm run import`）を作る**
    - 準備済み：Notion の「コネクション」kiroku-import（読み取りのみ・ユーザー情報なし）を **HeihachiroさんのNotion** ワークスペースに作成し、3DBに接続。鍵とDB ID は `.env.import`（Git対象外）に記入済み
      - 注意：ユーザーの Notion は2アカウントある。DBがあるのは Heihachiro 側（デスクトップアプリ）。ブラウザ側の OkamuraNoriaki ワークスペースにも kiroku-import を作ってしまったが未使用
      - Notion の画面では「インテグレーション」→「コネクション」、ページへの接続は「•••」→「詳細」→「接続」に変わっている
@@ -96,7 +96,13 @@ supabase/schema.sql     SQL Editor に貼って実行する
      2. 本文の文章は、レシピ→Notes、買ったもの→備考 の後ろに足す（「プロパティ」の1件も Notes へ）
      3. 選択肢は Notion のものを使う（アプリ初期の選択肢も残す）
      4. Language の「Japanese」→「日本語」
-   - 気をつけること：HEIC 18枚（sharp で読めなければ Mac の `sips` で変換）、psd 1枚はスキップして一覧に出す、外部リンク画像は取れたものだけ
+   - 気をつけること：外部リンク画像は取れたものだけ
+   - **お試し変換の結果**（2026-11-04）：`convert.ts`（対応表＋変換、本番と共通）/ `images.ts`（sharp で縮小、HEIC は sips 経由）/ `dry.ts`。全件の結果は `scripts/notion-import/out/dry.json`（Git対象外）
+     - 項目名の訂正：Recipe は「食材」「調味料等」が別々の rich_text（「、」区切り）→ アプリの 食材 / 調味料等 タグへ
+     - 縮小テスト 49枚すべて成功（HEIC も psd も外部リンクも OK）。平均 117KB/枚 → 全1269枚で約145MB
+     - 選択肢の追加：レシピ カテゴリ+15・出典+14、買ったもの カテゴリー+12・購入店+30（大文字小文字違いはアプリ側の表記に寄せる：amazon→Amazon）
+     - 読書記録で書名が空・著者欄に書名が入ったページ1件 → 著者欄の文字を書名にする
+     - 中身がほぼ空のページ3件（Recipe「ゆりあTOEIC」＝ファイル添付だけ、買ったもの 名前なし2件）の扱いはユーザー確認中
 4. 気になっている点（実機確認後に判断）：
    - JS が約500KB（gzip 143KB）。Supabase ライブラリが大きいため。必要なら画面ごとに分割読み込み
    - 項目を削除しても、入力済みの値はデータに残る（画面に出ないだけ）
