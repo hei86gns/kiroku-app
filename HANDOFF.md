@@ -1,6 +1,6 @@
 # 記録アプリ（kiroku-app）引き継ぎメモ
 
-最終更新：2026-11-03（初版を公開済み。段階2の計画を作成済み・ユーザーの承認待ち）
+最終更新：2026-11-04（初版を公開済み。段階2：Notion の下見まで完了、次はお試し変換）
 
 ## 今どこまで進んだか
 | 段階 | 状態 |
@@ -75,10 +75,28 @@ supabase/schema.sql     SQL Editor に貼って実行する
 ## 次にやること
 1. iPhone でホーム画面に追加 → 撮影して登録、縦向き写真の向き、オフライン登録を確認
 2. ユーザー作業（任意）：Supabase の Auth → URL Configuration → Redirect URLs に `https://hei86gns.github.io/kiroku-app/` を追加（パスワードリセット用）
-3. 段階2（Notion からの取り込み）：**計画を作成済み → `docs/plan-v2-notion-import.md`（ユーザーの承認待ち）**。再開時は「下見（inspect）から作ってよいか」を確認し、ユーザー作業（Notion インテグレーション作成・3DBに接続・鍵とDBのURL・容量確認SQL）をお願いする。方針は「一度だけ取り込む」（ユーザーに説明済み。Notion を直接のぞく方式は不採用）
-   - Notion の件数（ユーザーの見込み）：買ったもの 50〜100 / 読書記録 200以下 / レシピ 100〜200 → 合計 約350〜500件
-   - 写真の量の目安：1枚あたり約230KB（本体＋一覧用）。Supabase 無料枠のストレージ 1GB はプロジェクトB の他アプリと共有なので、取り込み前に空き容量を確認する
-   - 取り込み方法（CSV 書き出し or Notion API）は、写真も運べる API を第一候補に検討
+3. 段階2（Notion からの取り込み）：計画 `docs/plan-v2-notion-import.md`（承認済み）。**下見（inspect）まで完了 → 次は お試し変換（`npm run import:dry`）を作る**
+   - 準備済み：Notion の「コネクション」kiroku-import（読み取りのみ・ユーザー情報なし）を **HeihachiroさんのNotion** ワークスペースに作成し、3DBに接続。鍵とDB ID は `.env.import`（Git対象外）に記入済み
+     - 注意：ユーザーの Notion は2アカウントある。DBがあるのは Heihachiro 側（デスクトップアプリ）。ブラウザ側の OkamuraNoriaki ワークスペースにも kiroku-import を作ってしまったが未使用
+     - Notion の画面では「インテグレーション」→「コネクション」、ページへの接続は「•••」→「詳細」→「接続」に変わっている
+   - 実装：`scripts/notion-import/notion.ts`（fetch だけの読み取り用、Notion-Version 2022-06-28、429で再試行、同時3件）、`inspect.ts`。Node 24 で `.ts` を直接実行。型チェックは `tsconfig.node.json` に `scripts` を追加済み。`@notionhq/client` は使わない方針に変更
+   - **下見の結果**（2026-11-04）
+     | DB | ページ | 画像（Notion内） | 推定 |
+     |---|---|---|---|
+     | Recipe | 219 | 846（項目302＋本文544）、外部リンク46 | 190MB |
+     | 買ったもの | 198 | 323（項目320＋本文3）、外部2 | 73MB |
+     | 読書記録 | 169 | 52（カバー） | 12MB |
+     → 合計586件・画像1221枚・約274MB。Storage 使用中は約19MB（attachments 18MB）なので 1GB に余裕あり
+   - Notion の項目名：
+     - Recipe：名前(title) / URL / Notes / 評価(⭐select) / 出典(select16種) / 自分の料理画像(files) / 料理日 / カテゴリ(multi16種) / 食材・調味料等（**rich_text の「、」区切り**）/ プロパティ（1件だけ入力あり。作り方の文章）
+     - 買ったもの：名前 / カテゴリー(multi13種) / 購入日 / 型番 / 画像(files 最大5枚) / 購入店(select34種) / 備考 / URL / 価格
+     - 読書記録：Auther(title)=著者 / Title=書名 / Language（"Japanese " ※末尾空白, "English"）/ Start・Finish Reading / 評価 / Price / メモ / カバー / 内容・感想 / Place / Duration・関数（数式＝取り込まない）
+   - **ユーザーと決めた変換方針**
+     1. レシピ本文の画像（スクショ）は全部「作り方スクショ」に順番どおり入れる
+     2. 本文の文章は、レシピ→Notes、買ったもの→備考 の後ろに足す（「プロパティ」の1件も Notes へ）
+     3. 選択肢は Notion のものを使う（アプリ初期の選択肢も残す）
+     4. Language の「Japanese」→「日本語」
+   - 気をつけること：HEIC 18枚（sharp で読めなければ Mac の `sips` で変換）、psd 1枚はスキップして一覧に出す、外部リンク画像は取れたものだけ
 4. 気になっている点（実機確認後に判断）：
    - JS が約500KB（gzip 143KB）。Supabase ライブラリが大きいため。必要なら画面ごとに分割読み込み
    - 項目を削除しても、入力済みの値はデータに残る（画面に出ないだけ）
