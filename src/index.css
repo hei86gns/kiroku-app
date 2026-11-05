@@ -304,3 +304,9 @@ mark { background: color-mix(in srgb, var(--c) 22%, transparent); color: var(--i
 /* Drop target while dragging a picture over it (paste / drag-and-drop) */
 .dropping { outline: 2px dashed var(--c); outline-offset: 4px; border-radius: 14px; }
 .sheet.dropping { outline-offset: -8px; }
+
+/* 撮影 + 貼り付け side by side in the capture sheet (貼り付け shows on PC only) */
+.pickrow { display: flex; gap: 8px; }
+.pickrow .pickbtn:first-child { flex: 1; }
+.pickbtn.paste { background: var(--c-soft); color: var(--c); border: 1.5px dashed var(--c-line); font: inherit; font-weight: 700; padding-inline: 18px; }
+button.addimg { font-family: inherit; }

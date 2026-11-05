@@ -15,6 +15,7 @@ export const IcGear = () => <S><path d="M4 7h10M18 7h2M4 17h4M12 17h8" /><circle
 export const IcPlus = () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
 export const IcBack = () => <S><path d="m15 18-6-6 6-6" /></S>
 export const IcCam = () => <S size={22} w={2}><path d="M4 8h3l2-3h6l2 3h3v11H4z" /><circle cx="12" cy="13" r="3.5" /></S>
+export const IcClip = () => <S size={20} w={2}><rect x="5" y="4" width="14" height="17" rx="2.5" /><path d="M9 4.5V3h6v1.5M9 11h6M9 15h4" /></S>
 export const IcSun = () => <S size={16}><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></S>
 export const IcMoon = () => <S size={16}><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z" /></S>
 

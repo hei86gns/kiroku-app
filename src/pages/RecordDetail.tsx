@@ -2,11 +2,12 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useApp } from '../context'
 import { asImages, coverOf, durationOf, fmtDate, maxSideFor, numbering, recordNo, tagsInUse } from '../lib/fields'
 import { prepareImages, toNewImages } from '../lib/image'
-import { hasPointer, useDropImages, usePasteImages } from '../lib/pasteDrop'
+import { hasPointer, NO_IMAGE, pasteFromClipboard, useDropImages, usePasteImages } from '../lib/pasteDrop'
 import type { FieldDef, FieldValue, ImageRef, KRecord } from '../lib/types'
 import { Header, Img, Pend } from '../components/common'
 import { FieldDisplay, FieldEditor } from '../components/FieldInputs'
 import Lightbox from '../components/Lightbox'
+import { IcClip } from '../components/Icons'
 
 function ImageStrip({ images, editing, onZoom, onChange, onAdd }: {
   images: ImageRef[]
@@ -15,6 +16,7 @@ function ImageStrip({ images, editing, onZoom, onChange, onAdd }: {
   onChange: (next: ImageRef[]) => void
   onAdd: (files: File[]) => void
 }) {
+  const { toast } = useApp()
   const drop = useDropImages(onAdd, editing)
   if (!images.length && !editing) return <span className="empty">なし</span>
   const move = (i: number, d: number) => {
@@ -43,6 +45,11 @@ function ImageStrip({ images, editing, onZoom, onChange, onAdd }: {
           ＋<br />追加
           <input type="file" accept="image/*" multiple hidden onChange={(e) => { onAdd([...(e.target.files ?? [])]); e.target.value = '' }} />
         </label>
+      )}
+      {editing && hasPointer() && (
+        <button type="button" className="addimg" onClick={() => void pasteFromClipboard(onAdd, toast)} title="コピーしたスクショをここに入れます（⌘V でも可）">
+          <span><IcClip /><br />貼り付け</span>
+        </button>
       )}
     </div>
   )
@@ -82,7 +89,7 @@ export default function RecordDetail({ recordId, startEditing, justSaved, onBack
   // ⌘V / drop on the big photo → the cover field (読書記録ならカバー)
   const coverField = c && (c.fields.find((x) => x.key === c.cover_field_key && x.type === 'image') ?? c.fields.find((x) => x.type === 'image'))
   const addToCover = (files: File[]) => { if (coverField) void addImages(coverField, files) }
-  usePasteImages(addToCover, !!coverField)
+  usePasteImages((files) => (files.length ? addToCover(files) : toast(NO_IMAGE)), !!coverField)
   const heroDrop = useDropImages(addToCover, !!coverField)
 
   // Autosave edits shortly after typing stops
@@ -206,7 +213,7 @@ export default function RecordDetail({ recordId, startEditing, justSaved, onBack
           )}
           {busy && <p className="hint">縮小しています…</p>}
           {editing && coverField && hasPointer() && (
-            <p className="hint">スクショは ⌘V で「{coverField.label}」に貼り付けられます。ほかの画像項目へはドラッグで追加できます。</p>
+            <p className="hint">コピーしたスクショは各画像項目の「貼り付け」で入れられます（⌘V だけなら「{coverField.label}」へ）。ファイルはドラッグでも追加できます。</p>
           )}
           <div className="fields">{rows}</div>
           {editing && (

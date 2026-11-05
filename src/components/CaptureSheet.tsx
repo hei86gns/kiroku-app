@@ -2,9 +2,9 @@ import { useState } from 'react'
 import { useApp } from '../context'
 import { maxSideFor, newId } from '../lib/fields'
 import { prepareImages, toNewImages, type PreparedImage } from '../lib/image'
-import { hasPointer, useDropImages, usePasteImages } from '../lib/pasteDrop'
+import { hasPointer, NO_IMAGE, pasteFromClipboard, useDropImages, usePasteImages } from '../lib/pasteDrop'
 import type { Collection, KRecord } from '../lib/types'
-import { CollectionIcon, IcCam } from './Icons'
+import { CollectionIcon, IcCam, IcClip } from './Icons'
 
 const defaultField = (c: Collection) => c.cover_field_key ?? c.fields.find((f) => f.type === 'image')?.key ?? null
 
@@ -44,7 +44,7 @@ export default function CaptureSheet({ askCollection, onClose }: { askCollection
   }
 
   const canAdd = !!c && !!field
-  usePasteImages((list) => void pick(list), canAdd)
+  usePasteImages((list) => (list.length ? void pick(list) : toast(NO_IMAGE)), canAdd)
   const drop = useDropImages((list) => void pick(list), canAdd)
 
   const save = async () => {
@@ -92,10 +92,17 @@ export default function CaptureSheet({ askCollection, onClose }: { askCollection
         </div>
         {imageFields.length > 0 && (
           <>
-            <label className="pickbtn">
-              <IcCam />撮影 / 写真を選ぶ
-              <input type="file" accept="image/*" multiple onChange={(e) => { void pick([...(e.target.files ?? [])]); e.target.value = '' }} />
-            </label>
+            <div className="pickrow">
+              <label className="pickbtn">
+                <IcCam />撮影 / 写真を選ぶ
+                <input type="file" accept="image/*" multiple onChange={(e) => { void pick([...(e.target.files ?? [])]); e.target.value = '' }} />
+              </label>
+              {hasPointer() && (
+                <button type="button" className="pickbtn paste" onClick={() => void pasteFromClipboard((l) => void pick(l), toast)}>
+                  <IcClip />貼り付け
+                </button>
+              )}
+            </div>
             {busy && <p className="hint" style={{ margin: 0 }}>縮小しています…</p>}
             {files.length ? (
               <div className="strip">
@@ -115,7 +122,7 @@ export default function CaptureSheet({ askCollection, onClose }: { askCollection
             ) : (
               <p className="hint" style={{ margin: '-4px 0 0' }}>
                 複数枚まとめて選べます。選んだ写真はこの場で自動的に縮小されます。
-                {hasPointer() && 'スクショは ⌘V で貼り付け、ファイルはここへドラッグでも入れられます。'}
+                {hasPointer() && 'コピーしたスクショは「貼り付け」（または ⌘V）で、ファイルはここへドラッグでも入れられます。'}
               </p>
             )}
             <div>

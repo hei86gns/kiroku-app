@@ -1,20 +1,63 @@
 import { useEffect, useRef, useState, type DragEvent } from 'react'
 
-const imageFilesOf = (dt: DataTransfer | null) =>
-  [...(dt?.files ?? [])].filter((f) => f.type.startsWith('image/'))
+// Some browsers leave `files` empty for a pasted screenshot but still offer it in `items`
+const imageFilesOf = (dt: DataTransfer | null) => {
+  const files = [...(dt?.files ?? [])]
+  if (!files.length) {
+    for (const item of dt?.items ?? []) {
+      const f = item.kind === 'file' ? item.getAsFile() : null
+      if (f) files.push(f)
+    }
+  }
+  return files.filter((f) => f.type.startsWith('image/'))
+}
+
+const isTyping = (t: EventTarget | null) =>
+  t instanceof HTMLElement && (t.isContentEditable || t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT')
+
+/**
+ * Pictures currently on the clipboard, read when a 貼り付け button is clicked.
+ * Throws when the browser refuses access (the person declined, or an old browser).
+ */
+async function readClipboardImages(): Promise<File[]> {
+  const files: File[] = []
+  for (const item of await navigator.clipboard.read()) {
+    const type = item.types.find((t) => t.startsWith('image/'))
+    if (type) files.push(new File([await item.getType(type)], `pasted.${type.split('/')[1]}`, { type }))
+  }
+  return files
+}
+
+export const NO_IMAGE = 'コピーされた画像がありません。スクショは ⌘+control+shift+4 で撮るとコピーされます。'
+
+/** The 貼り付け button: reads the clipboard and hands the pictures over (or explains why not). */
+export async function pasteFromClipboard(onFiles: (files: File[]) => void, toast: (m: string) => void) {
+  try {
+    const files = await readClipboardImages()
+    if (files.length) onFiles(files)
+    else toast(NO_IMAGE)
+  } catch {
+    toast('ブラウザが貼り付けを許可しませんでした。⌘V でも貼り付けられます。')
+  }
+}
 
 /** True on devices with a mouse/trackpad, where paste and drag-and-drop make sense. */
 export const hasPointer = () => window.matchMedia('(pointer: fine)').matches
 
 // Only the most recently mounted listener gets the paste (e.g. the capture sheet over a detail page).
+// An empty list means something other than a picture was pasted outside a text box.
 const pasteStack: { current: (files: File[]) => void }[] = []
 
 addEventListener('paste', (e) => {
   const top = pasteStack.at(-1)
+  if (!top) return
   const files = imageFilesOf(e.clipboardData)
-  if (!top || !files.length) return
-  e.preventDefault()
-  top.current(files)
+  if (files.length) {
+    e.preventDefault()
+    top.current(files)
+  } else if (!isTyping(e.target)) {
+    top.current([])
+  }
 })
 
 // A file dropped outside a drop area would make the browser leave the app to show the picture
@@ -24,7 +67,7 @@ for (const type of ['dragover', 'drop'] as const) {
   })
 }
 
-/** Calls `onFiles` when an image is pasted anywhere on the page (⌘V after a screenshot). */
+/** Calls `onFiles` when an image is pasted anywhere on the page (⌘V after a screenshot); [] when there was no image. */
 export function usePasteImages(onFiles: (files: File[]) => void, enabled = true) {
   const ref = useRef(onFiles)
   useEffect(() => { ref.current = onFiles })
