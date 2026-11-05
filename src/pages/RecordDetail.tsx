@@ -69,6 +69,7 @@ export default function RecordDetail({ recordId, startEditing, justSaved, onBack
   const [zoom, setZoom] = useState<{ images: ImageRef[]; i: number } | null>(null)
   const [confirmDel, setConfirmDel] = useState(false)
   const [busy, setBusy] = useState(false)
+  const pan = useRef<{ px: number; py: number; x: number; y: number; ox: number; oy: number } | null>(null)
   const nos = useMemo(() => (c ? numbering(c, records) : new Map<string, number>()), [c, records])
 
   /** Shrinks and adds pictures to a field. Works outside edit mode too (paste / drop on the photo). */
@@ -126,14 +127,45 @@ export default function RecordDetail({ recordId, startEditing, justSaved, onBack
   }
 
   const cover = coverOf(c, r)
-  const zoomCover = () => {
+  /** Where the cover picture lives: its field, that field's pictures and its index. */
+  const coverAt = () => {
     for (const f of [c.fields.find((x) => x.key === c.cover_field_key), ...c.fields]) {
       if (f?.type !== 'image') continue
       const imgs = asImages(r.data[f.key])
       const i = imgs.findIndex((x) => x.path === cover?.path)
-      if (i >= 0) { setZoom({ images: imgs, i }); return }
+      if (i >= 0) return { f, imgs, i }
+    }
+    return null
+  }
+  const zoomCover = () => {
+    const at = coverAt()
+    if (at) setZoom({ images: at.imgs, i: at.i })
+  }
+  const setCoverPos = (x: number | undefined, y: number | undefined) => {
+    const at = coverAt()
+    if (at) set(at.f.key, at.imgs.map((im, k) => (k === at.i ? { ...im, x, y } : im)))
+  }
+
+  // Edit mode: drag the big photo to choose which part shows when it is cropped
+  const onPanStart = (e: React.PointerEvent<HTMLDivElement>) => {
+    const img = e.currentTarget.querySelector('img')
+    if (!editing || !cover || !img || !img.naturalWidth) return
+    const s = Math.max(img.clientWidth / img.naturalWidth, img.clientHeight / img.naturalHeight)
+    e.currentTarget.setPointerCapture(e.pointerId)
+    pan.current = {
+      px: e.clientX, py: e.clientY, x: cover.x ?? 50, y: cover.y ?? 50,
+      ox: img.naturalWidth * s - img.clientWidth, oy: img.naturalHeight * s - img.clientHeight,
     }
   }
+  const onPanMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const p = pan.current
+    if (!p) return
+    // Moving the finger right shows more of the left side → smaller %
+    const to = (v: number, d: number, over: number) => (over > 1 ? Math.round(Math.min(100, Math.max(0, v - (d / over) * 100))) : 50)
+    setCoverPos(to(p.x, e.clientX - p.px, p.ox), to(p.y, e.clientY - p.py, p.oy))
+  }
+  const onPanEnd = () => { pan.current = null }
+  const panning = editing && !!cover
   const sub = c.sub_field_key && typeof r.data[c.sub_field_key] === 'string' ? (r.data[c.sub_field_key] as string) : ''
 
   const rows = c.fields.map((f) => {
@@ -189,9 +221,14 @@ export default function RecordDetail({ recordId, startEditing, justSaved, onBack
       )}
       <div className="dlay">
         <div className="dleft">
-          <div className={`dhero ${heroDrop.over ? 'dropping' : ''}`} {...heroDrop.props}>
-            <Img image={cover} className="hero" fallback={r.title} onClick={cover ? zoomCover : undefined} />
-            {cover && <span className="zoomhint">TAP TO ZOOM</span>}
+          <div className={`dhero ${heroDrop.over ? 'dropping' : ''} ${panning ? 'pan' : ''}`} {...heroDrop.props}
+            onPointerDown={onPanStart} onPointerMove={onPanMove} onPointerUp={onPanEnd} onPointerCancel={onPanEnd}>
+            <Img image={cover} className="hero" fallback={r.title} onClick={cover && !editing ? zoomCover : undefined} />
+            {cover && !editing && <span className="zoomhint">TAP TO ZOOM</span>}
+            {panning && <span className="zoomhint">ドラッグで表示位置を調整</span>}
+            {panning && (cover.x != null || cover.y != null) && (
+              <button type="button" className="panreset" onPointerDown={(e) => e.stopPropagation()} onClick={() => setCoverPos(undefined, undefined)}>中央に戻す</button>
+            )}
           </div>
         </div>
         <div className="dright">

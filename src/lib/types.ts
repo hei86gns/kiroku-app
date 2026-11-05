@@ -44,6 +44,9 @@ export interface ImageRef {
   thumb: string
   w: number
   h: number
+  /** Which part shows when cropped: CSS object-position in %, 0–100. Missing = centre. */
+  x?: number
+  y?: number
 }
 
 export type FieldValue = string | number | string[] | ImageRef[] | null

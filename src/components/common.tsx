@@ -15,7 +15,8 @@ export function Img({ image, thumb, fallback, className, onClick, alt = '' }: {
 }) {
   const url = useImageUrl(image ? (thumb ? image.thumb : image.path) : null)
   if (!url) return <div className={`ph ${className ?? ''}`} onClick={onClick}>{fallback?.slice(0, 1)}</div>
-  return <img src={url} alt={alt} className={className} onClick={onClick} crossOrigin="anonymous" loading="lazy" decoding="async" />
+  const pos = image && (image.x != null || image.y != null) ? { objectPosition: `${image.x ?? 50}% ${image.y ?? 50}%` } : undefined
+  return <img src={url} alt={alt} className={className} style={pos} onClick={onClick} crossOrigin="anonymous" loading="lazy" decoding="async" />
 }
 
 export const Stars = ({ n, size }: { n: number | null | undefined; size?: number }) => {

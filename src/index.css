@@ -310,3 +310,6 @@ mark { background: color-mix(in srgb, var(--c) 22%, transparent); color: var(--i
 .pickrow .pickbtn:first-child { flex: 1; }
 .pickbtn.paste { background: var(--c-soft); color: var(--c); border: 1.5px dashed var(--c-line); font: inherit; font-weight: 700; padding-inline: 18px; }
 button.addimg { font-family: inherit; }
+.dhero.pan .hero { cursor: grab; touch-action: none; user-select: none; -webkit-user-drag: none; }
+.dhero.pan .hero:active { cursor: grabbing; }
+.panreset { position: absolute; left: 12px; bottom: 12px; font-family: inherit; font-size: 11px; color: #fff; background: rgba(12, 13, 18, 0.55); border: 0; padding: 4px 10px; border-radius: 99px; backdrop-filter: blur(6px); }
