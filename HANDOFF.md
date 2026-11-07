@@ -1,6 +1,6 @@
 # 記録アプリ（kiroku-app）引き継ぎメモ
 
-最終更新：2026-11-07（コレクションのカバー写真を追加）
+最終更新：2026-11-07（コレクションのカバー写真、Music・もらったもの を追加）
 
 ## 今どこまで進んだか
 | 段階 | 状態 |
@@ -39,6 +39,11 @@ Git：`main` ブランチ。`.env` は Kakeibo と同じプロジェクトBの�
   - 書名から表紙を自動検索（Google Books）は見送り：APIキー必須＋画像がCORSで読めず中継サーバーが要るため
 - **写真の表示位置（2026-11-05）**：詳細の編集中に大きな写真をドラッグすると、切り取られて見える部分を選べる。画像データ（ImageRef）に `x` / `y`（0〜100%、CSS の object-position）を追加。無ければ中央。一覧・検索のサムネにも反映（`Img` 部品）。表の変更は不要（data の JSON 内）
 - **コレクションのカバー写真（2026-11-07）**：一覧の上に写真を出し、その上に名前を白文字で重ねる。`collections.meta.cover`（ImageRef、表の変更なし）。Notion の各DBのカバー（買ったものは親ページのカバー）を `npm run import:covers`（`scripts/notion-import/covers.ts`）で取り込み済み・ユーザー確認済み。写真は `{user}/{collection}/cover-{時刻}.jpg`（毎回別名、前のは削除）。アプリ内での変更・位置調整は未対応
+- **Music・もらったもの を追加（2026-11-07）**：Notion の2DBを kiroku-import に接続して取り込み（失敗0）。コレクションは取り込みスクリプトが作成（定義は `convert.ts` の `MAPPINGS.music / gifts` の `create`）
+  - Music（橙・music アイコン）：曲名 / アーティスト(タグ、タイトル下に表示) / 購入日 / 価格 / ジャケット画像(空) / メモ。56件
+  - もらったもの（桃・gift アイコン）：名前 / 写真 / 誰から(タイトル下) / もらった日 / なんのプレゼント / きっかけ(選択肢・絞り込み) / メモ。32件・写真74枚。空ページ1件は対象外
+  - スクリプトはDB名を指定できる：`npm run import -- music gifts`、`import:dry`・`import:covers` も同じ。`.env.import` に `NOTION_DB_MUSIC` / `NOTION_DB_GIFTS` を追加
+  - タイトル下の項目（sub_field_key）は文字・選択・タグ項目から選べるように変更
 
 ## コードの地図
 ```
