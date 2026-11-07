@@ -1,4 +1,5 @@
-// 下見：Notion の3つのデータベースを読むだけで、何も書き込まない。
+// 下見：Notion のデータベースを読むだけで、何も書き込まない。
+// ID を付けるとそのデータベースだけ（例：npm run import:inspect -- <ID> <ID>）、無ければ .env.import の3つ。
 // 項目の名前・種類・入力件数・選択肢・写真の枚数と推定容量、ページ本文の中身を数えて表示する。
 //   npm run import:inspect
 
@@ -64,7 +65,9 @@ const short = (s: string, n = 40) => (s.length > n ? s.slice(0, n) + '…' : s)
 
 let grandImages = 0
 
-for (const [key, dbId] of Object.entries(env.dbs)) {
+const targets: [string, string][] = process.argv.length > 2 ? process.argv.slice(2).map((id) => [id, id]) : Object.entries(env.dbs)
+
+for (const [key, dbId] of targets) {
   const db = await notion.database(dbId)
   const pages = (await notion.queryAll(dbId)).filter((p) => !p.archived && !p.in_trash)
   const created = pages.map((p) => p.created_time).sort()

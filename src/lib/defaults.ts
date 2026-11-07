@@ -86,4 +86,4 @@ export function defaultCollections(): Collection[] {
 }
 
 /** Icons a collection can use (drawn in components/Icons.tsx). */
-export const ICON_KEYS = ['recipe', 'goods', 'books', 'film', 'place', 'note'] as const
+export const ICON_KEYS = ['recipe', 'goods', 'books', 'film', 'place', 'note', 'music', 'gift'] as const

@@ -4,7 +4,7 @@
 //   npm run import:covers
 
 import { createClient as createSupabase } from '@supabase/supabase-js'
-import { MAPPINGS, plain, type DbKey } from './convert.ts'
+import { MAPPINGS, pickDbs, plain } from './convert.ts'
 import { download, shrink } from './images.ts'
 import { login } from './login.ts'
 import { createClient, loadEnv, type NotionFile } from './notion.ts'
@@ -27,7 +27,7 @@ if (colError) throw colError
 const collections = cols as Pick<Collection, 'id' | 'name' | 'meta'>[]
 
 const plans: { name: string; collection: (typeof collections)[number]; cover: NotionFile; from: string }[] = []
-for (const [key, dbId] of Object.entries(env.dbs) as [DbKey, string][]) {
+for (const [key, dbId] of pickDbs(env.dbs)) {
   const db = await notion.database(dbId)
   const collection = collections.find((c) => c.name === MAPPINGS[key].collection)
   if (!collection) { console.log(`  ${plain(db.title)}：アプリに「${MAPPINGS[key].collection}」が無いので飛ばします`); continue }

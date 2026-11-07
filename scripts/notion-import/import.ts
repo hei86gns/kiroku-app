@@ -1,11 +1,13 @@
-// 本番の取り込み：Notion の3つのデータベースを記録アプリ（Supabase）へ移す。
+// 本番の取り込み：Notion のデータベースを記録アプリ（Supabase）へ移す。
+// アプリにまだ無いコレクション（Music / もらったもの）は、convert.ts の形で作ってから取り込む。
 // ユーザー本人としてログインして書き込む（RLS のまま、管理者用の鍵は使わない）。
 // 取り込み済みのページ（notion_page_id）は飛ばすので、途中で止まっても再実行すれば続きから。
-//   npm run import
+//   npm run import               … 全部
+//   npm run import -- music gifts … 指定したデータベースだけ
 
 import { mkdir, writeFile } from 'node:fs/promises'
 import { createClient as createSupabase } from '@supabase/supabase-js'
-import { alignToOptions, convertPage, isSkipped, MAPPINGS, mergeOptions, plain, type DbKey } from './convert.ts'
+import { alignToOptions, convertPage, type DbKey, isSkipped, MAPPINGS, mergeOptions, pickDbs, plain } from './convert.ts'
 import { download, extOf, shrink } from './images.ts'
 import { login } from './login.ts'
 import { createClient, loadEnv, mapLimit, type Page } from './notion.ts'
@@ -26,10 +28,11 @@ const { userId, ask } = await login(supabase)
 // ---------- 準備：コレクションと取り込み済みのページ ----------
 const { data: cols, error: colError } = await supabase
   .from('kiroku_collections')
-  .select('id, name, fields, cover_field_key')
+  .select('id, name, fields, cover_field_key, sort_order')
   .eq('user_id', userId)
 if (colError) throw colError
-const collections = cols as Pick<Collection, 'id' | 'name' | 'fields' | 'cover_field_key'>[]
+const collections = cols as Pick<Collection, 'id' | 'name' | 'fields' | 'cover_field_key' | 'sort_order'>[]
+let nextOrder = Math.max(-1, ...collections.map((c) => c.sort_order)) + 1
 
 const done = new Set<string>()
 for (let from = 0; ; from += 1000) {
@@ -48,15 +51,22 @@ interface Plan {
   key: DbKey
   dbTitle: string
   collection: (typeof collections)[number]
+  /** Not in the app yet: inserted just before its pages */
+  create?: Collection
   options: Record<string, string[]>
   addedOptions: number
   todo: Page[]
 }
 
 const plans: Plan[] = []
-for (const [key, dbId] of Object.entries(env.dbs) as [DbKey, string][]) {
+for (const [key, dbId] of pickDbs(env.dbs)) {
   const m = MAPPINGS[key]
-  const collection = collections.find((c) => c.name === m.collection)
+  let collection = collections.find((c) => c.name === m.collection)
+  let create: Collection | undefined
+  if (!collection && m.create) {
+    create = { ...m.create, id: crypto.randomUUID(), name: m.collection, sort_order: nextOrder++ }
+    collection = create
+  }
   if (!collection) throw new Error(`アプリにコレクション「${m.collection}」がありません`)
 
   // 変換先の項目がアプリ側にそろっているか（ユーザーが項目を消していたら止める）
@@ -71,12 +81,12 @@ for (const [key, dbId] of Object.entries(env.dbs) as [DbKey, string][]) {
   const addedOptions = Object.entries(options).reduce((n, [k, list]) => n + list.length - (appOptions[k]?.length ?? 0), 0)
   const pages = (await notion.queryAll(dbId)).filter((p) => !p.archived && !p.in_trash && !isSkipped(p.id))
   const todo = pages.filter((p) => !done.has(p.id))
-  plans.push({ key, dbTitle: plain(db.title), collection, options, addedOptions, todo })
+  plans.push({ key, dbTitle: plain(db.title), collection, create, options, addedOptions, todo })
 }
 
 console.log('\n取り込む内容：')
 for (const p of plans) {
-  console.log(`  ${p.dbTitle} → ${p.collection.name}：${p.todo.length}件（選択肢の追加 ${p.addedOptions}）`)
+  console.log(`  ${p.dbTitle} → ${p.collection.name}${p.create ? '（新しく作る）' : ''}：${p.todo.length}件（選択肢の追加 ${p.addedOptions}）`)
 }
 if (done.size) console.log(`  取り込み済みで飛ばすページ：${done.size}件`)
 if (plans.every((p) => p.todo.length === 0)) {
@@ -94,8 +104,15 @@ const failures: { db: string; title: string; notionUrl: string; problem: string 
 for (const plan of plans) {
   const { key, collection, options } = plan
 
+  if (plan.create) {
+    const fields = plan.create.fields.map((f) => (options[f.key] ? { ...f, options: options[f.key] } : f))
+    const { error } = await supabase.from('kiroku_collections').insert({ ...plan.create, fields, user_id: userId })
+    if (error) throw error
+    console.log(`\nコレクション「${collection.name}」を作りました`)
+  }
+
   // 選択肢を先に足す（項目の定義のうち options だけを書き換える）
-  if (plan.addedOptions) {
+  if (plan.addedOptions && !plan.create) {
     const fields = collection.fields.map((f) => (options[f.key] ? { ...f, options: options[f.key] } : f))
     const { error } = await supabase
       .from('kiroku_collections')

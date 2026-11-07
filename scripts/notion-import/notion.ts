@@ -38,6 +38,8 @@ export function loadEnv() {
       recipes: need('NOTION_DB_RECIPES'),
       goods: need('NOTION_DB_GOODS'),
       books: need('NOTION_DB_BOOKS'),
+      music: need('NOTION_DB_MUSIC'),
+      gifts: need('NOTION_DB_GIFTS'),
     },
   }
 }

@@ -26,6 +26,8 @@ const COLLECTION_ICONS: Record<string, ReactNode> = {
   film: <><rect x="3" y="5" width="18" height="14" rx="2" /><path d="M7 5v14M17 5v14M3 9h4M3 15h4M17 9h4M17 15h4" /></>,
   place: <><path d="M12 21s-7-6.5-7-12a7 7 0 0 1 14 0c0 5.5-7 12-7 12Z" /><circle cx="12" cy="9" r="2.5" /></>,
   note: <><path d="M6 3h9l4 4v14H6z" /><path d="M14 3v5h5M9 13h7M9 17h5" /></>,
+  music: <><path d="M9 18V5l11-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="17" cy="16" r="3" /></>,
+  gift: <><rect x="3" y="8" width="18" height="5" rx="1" /><path d="M5 13v8h14v-8M12 8v13" /><path d="M12 8C10 4 6.5 4.5 7 7c.3 1 2 1 5 1Zm0 0c2-4 5.5-3.5 5-1-.3 1-2 1-5 1Z" /></>,
 }
 
 export const CollectionIcon = ({ name, size = 26 }: { name: string; size?: number }) => (

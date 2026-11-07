@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useApp } from '../context'
-import { asImages, coverOf, durationOf, fmtDate, maxSideFor, numbering, recordNo, tagsInUse } from '../lib/fields'
+import { asImages, coverOf, durationOf, fmtDate, maxSideFor, numbering, recordNo, subTextOf, tagsInUse } from '../lib/fields'
 import { prepareImages, toNewImages } from '../lib/image'
 import { hasPointer, NO_IMAGE, pasteFromClipboard, useDropImages, usePasteImages } from '../lib/pasteDrop'
 import type { FieldDef, FieldValue, ImageRef, KRecord } from '../lib/types'
@@ -166,7 +166,7 @@ export default function RecordDetail({ recordId, startEditing, justSaved, onBack
   }
   const onPanEnd = () => { pan.current = null }
   const panning = editing && !!cover
-  const sub = c.sub_field_key && typeof r.data[c.sub_field_key] === 'string' ? (r.data[c.sub_field_key] as string) : ''
+  const sub = subTextOf(c, r)
 
   const rows = c.fields.map((f) => {
     const v = r.data[f.key]

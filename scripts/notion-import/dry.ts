@@ -4,7 +4,7 @@
 //   npm run import:dry
 
 import { mkdir, writeFile } from 'node:fs/promises'
-import { alignToOptions, convertPage, isSkipped, mergeOptions, plain, unmappedProps, type Converted, type DbKey } from './convert.ts'
+import { alignToOptions, type Converted, convertPage, type DbKey, isSkipped, mergeOptions, pickDbs, plain, unmappedProps } from './convert.ts'
 import { extOf, download, shrink } from './images.ts'
 import { createClient, loadEnv, mapLimit, type NotionFile } from './notion.ts'
 
@@ -19,6 +19,8 @@ const APP_OPTIONS: Record<DbKey, Record<string, string[]>> = {
     shop: ['Amazon', '無印良品', 'ヨドバシカメラ', 'ニトリ'],
   },
   books: { language: ['日本語', 'English'] },
+  music: {},
+  gifts: { occasion: [] },
 }
 
 /** Screenshot fields are kept larger so text stays readable (same as the app). */
@@ -48,7 +50,7 @@ const report: Record<string, unknown> = {}
 const shrinkTests: { db: string; title: string; ext: string; result: string }[] = []
 let shrunkBytes = 0, shrunkCount = 0, totalImages = 0
 
-for (const [key, dbId] of Object.entries(env.dbs) as [DbKey, string][]) {
+for (const [key, dbId] of pickDbs(env.dbs)) {
   const db = await notion.database(dbId)
   const pages = (await notion.queryAll(dbId)).filter((p) => !p.archived && !p.in_trash && !isSkipped(p.id))
   console.log(`\n══════ ${plain(db.title)}（${key}）${pages.length}件 ══════`)

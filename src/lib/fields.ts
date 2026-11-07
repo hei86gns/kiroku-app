@@ -40,6 +40,12 @@ export const hostOf = (url: string) => {
 }
 
 /** The image shown on cards: the collection's cover field first, then any image field. */
+/** The value shown under the title (著者・アーティスト・誰から など). */
+export function subTextOf(c: Collection, r: KRecord): string {
+  const v = c.sub_field_key ? r.data[c.sub_field_key] : null
+  return typeof v === 'string' ? v : asStrings(v).join('、')
+}
+
 export function coverOf(c: Collection, r: KRecord): ImageRef | null {
   const fromCover = c.cover_field_key ? asImages(r.data[c.cover_field_key])[0] : undefined
   if (fromCover) return fromCover

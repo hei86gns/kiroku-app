@@ -2,14 +2,18 @@
 // 対応表は docs/plan-v2-notion-import.md と HANDOFF.md の「ユーザーと決めた変換方針」。
 
 import type { Block, Database, NotionFile, Page, Property, RichText } from './notion.ts'
+import type { Collection } from '../../src/lib/types.ts'
 
-export type DbKey = 'recipes' | 'goods' | 'books'
+export type DbKey = 'recipes' | 'goods' | 'books' | 'music' | 'gifts'
 
 type Rule = {
   from: string
   to: string
-  as: 'title' | 'text' | 'number' | 'date' | 'url' | 'rating' | 'select' | 'multiselect' | 'tags' | 'images'
+  as: 'title' | 'text' | 'number' | 'date' | 'url' | 'rating' | 'select' | 'multiselect' | 'tags' | 'multitags' | 'images'
 }
+
+/** A collection the import creates when the app does not have it yet (Music / もらったもの, 2026-11-07). */
+export type NewCollection = Omit<Collection, 'id' | 'name' | 'sort_order'>
 
 export interface Mapping {
   /** App collection name (kiroku_collections.name) */
@@ -26,6 +30,8 @@ export interface Mapping {
   rename?: Record<string, Record<string, string>>
   /** When the title is empty, this field's text becomes the title (書名を著者欄に書いたページ) */
   titleFallback?: string
+  /** Create the collection with this shape if it is missing */
+  create?: NewCollection
 }
 
 export const MAPPINGS: Record<DbKey, Mapping> = {
@@ -86,6 +92,83 @@ export const MAPPINGS: Record<DbKey, Mapping> = {
     rename: { language: { Japanese: '日本語' } },
     titleFallback: 'author',
   },
+  music: {
+    collection: 'Music',
+    rules: [
+      { from: '名前', to: 'title', as: 'title' },
+      { from: 'Artist', to: 'artist', as: 'multitags' },
+      { from: '購入日', to: 'boughtOn', as: 'date' },
+      { from: 'Price', to: 'price', as: 'number' },
+    ],
+    skip: [],
+    bodyTextTo: 'memo',
+    bodyImagesTo: 'jacket',
+    create: {
+      en_name: 'MUSIC',
+      theme: 'amber',
+      icon: 'music',
+      title_label: '曲名',
+      sub_field_key: 'artist',
+      cover_field_key: 'jacket',
+      default_view: 'list',
+      saved_view: { view: 'list', sort: 'boughtOn' },
+      meta: {},
+      fields: [
+        { key: 'artist', label: 'アーティスト', type: 'multiselect', tag: true },
+        { key: 'boughtOn', label: '購入日', type: 'date' },
+        { key: 'price', label: '価格', type: 'number', unit: '円' },
+        { key: 'jacket', label: 'ジャケット画像', type: 'image', imageKind: 'photo' },
+        { key: 'memo', label: 'メモ', type: 'longtext' },
+      ],
+    },
+  },
+  gifts: {
+    collection: 'もらったもの',
+    rules: [
+      { from: 'Name', to: 'title', as: 'title' },
+      { from: 'Files & media', to: 'photo', as: 'images' },
+      { from: '誰から？', to: 'from', as: 'text' },
+      { from: 'Date', to: 'receivedOn', as: 'date' },
+      { from: 'なんのプレゼント', to: 'what', as: 'text' },
+      { from: 'Tags', to: 'occasion', as: 'multiselect' },
+      { from: 'メモ', to: 'memo', as: 'text' },
+    ],
+    skip: [],
+    bodyTextTo: 'memo',
+    bodyImagesTo: 'photo',
+    create: {
+      en_name: 'GIFTS',
+      theme: 'pink',
+      icon: 'gift',
+      title_label: '名前',
+      sub_field_key: 'from',
+      cover_field_key: 'photo',
+      default_view: 'gallery',
+      saved_view: { view: 'gallery', sort: 'receivedOn' },
+      meta: {},
+      fields: [
+        { key: 'photo', label: '写真', type: 'image', imageKind: 'photo' },
+        { key: 'from', label: '誰から', type: 'text' },
+        { key: 'receivedOn', label: 'もらった日', type: 'date' },
+        { key: 'what', label: 'なんのプレゼント', type: 'text' },
+        { key: 'occasion', label: 'きっかけ', type: 'multiselect', options: [] },
+        { key: 'memo', label: 'メモ', type: 'longtext' },
+      ],
+    },
+  },
+}
+
+/**
+ * Databases to work on: the keys given on the command line (npm run import -- music gifts), or all.
+ * Keeps a run to the new databases so pages added since the first import are not pulled in by accident.
+ */
+export function pickDbs(dbs: Record<DbKey, string>): [DbKey, string][] {
+  const all = Object.entries(dbs) as [DbKey, string][]
+  const want = process.argv.slice(2)
+  if (!want.length) return all
+  const bad = want.filter((k) => !(k in dbs))
+  if (bad.length) throw new Error(`知らないデータベース：${bad.join(', ')}（使えるのは ${Object.keys(dbs).join(' / ')}）`)
+  return all.filter(([k]) => want.includes(k))
 }
 
 /** Nearly empty pages the user chose not to import (2026-11-04). Notion page ids without dashes. */
@@ -93,6 +176,7 @@ export const SKIP_PAGES = new Set([
   '3a36579a5c2481ebad7ce8e713fdaf54', // Recipe「ゆりあTOEIC」：ファイル添付だけ
   '3636579a5c2480928b73d0bdcdfd041b', // 買ったもの：名前なし、カテゴリーだけ
   '2b56579a5c2480829546f7e77ba2031c', // 買ったもの：空
+  '1096579a5c2480f19160e48aef5fe3c5', // もらったもの：空（2026-11-07）
 ])
 export const isSkipped = (pageId: string) => SKIP_PAGES.has(pageId.replaceAll('-', ''))
 
@@ -153,7 +237,7 @@ export function readBody(blocks: Block[], depth = 0): { lines: string[]; images:
     if (b.type in BODY_TEXT_TYPES) {
       const check = b.type === 'to_do' ? (body?.checked ? '☑ ' : '☐ ') : ''
       const t = plain(body?.rich_text)
-      if (t || b.type !== 'paragraph') out.lines.push(indent + BODY_TEXT_TYPES[b.type](n) + check + t)
+      if (t || b.type === 'to_do') out.lines.push(indent + BODY_TEXT_TYPES[b.type](n) + check + t)
       else out.lines.push('')
     } else if (b.type === 'image') {
       out.images.push(b.image as NotionFile)
@@ -234,7 +318,8 @@ export function convertPage(key: DbKey, page: Page, body: Block[]): Converted {
         c.data[r.to] = m.rename?.[r.to]?.[s] ?? s
         break
       }
-      case 'multiselect': {
+      case 'multiselect':
+      case 'multitags': {
         const names = (p.multi_select as { name: string }[]).map((o) => o.name.trim()).filter(Boolean)
         if (names.length) c.data[r.to] = names
         break

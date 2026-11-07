@@ -1,13 +1,12 @@
 import type { Collection, KRecord } from '../lib/types'
-import { asStrings, durationOf, filterFieldOf, ratingFieldOf } from '../lib/fields'
+import { asStrings, durationOf, filterFieldOf, ratingFieldOf, subTextOf } from '../lib/fields'
 import { Stars } from './common'
 
 /** The short line under a title on cards and rows. */
 export function SubLine({ c, r }: { c: Collection; r: KRecord }) {
   if (c.sub_field_key) {
-    const v = r.data[c.sub_field_key]
     const dur = durationOf(c, r)
-    return <>{typeof v === 'string' ? v : ''}{dur && !dur.done ? ' · 読書中' : ''}</>
+    return <>{subTextOf(c, r)}{dur && !dur.done ? ' · 読書中' : ''}</>
   }
   const rf = ratingFieldOf(c)
   const rating = rf ? r.data[rf.key] : null

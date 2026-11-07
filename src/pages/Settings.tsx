@@ -131,7 +131,7 @@ function CollectionSettings({ initial }: { initial: Collection }) {
   }
 
   const images = c.fields.filter((f) => f.type === 'image')
-  const texts = c.fields.filter((f) => f.type === 'text')
+  const texts = c.fields.filter((f) => f.type === 'text' || f.type === 'select' || f.type === 'multiselect')
 
   return (
     <>
