@@ -34,7 +34,8 @@ export interface Collection {
   cover_field_key: string | null
   default_view: ViewMode
   saved_view: SavedView
-  meta: { duration?: { start: string; finish: string } }
+  /** duration: 読書記録の開始日/終了日の組。cover: 一覧の上に出す写真 */
+  meta: { duration?: { start: string; finish: string }; cover?: ImageRef }
   sort_order: number
 }
 

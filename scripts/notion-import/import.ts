@@ -4,10 +4,10 @@
 //   npm run import
 
 import { mkdir, writeFile } from 'node:fs/promises'
-import { createInterface } from 'node:readline/promises'
 import { createClient as createSupabase } from '@supabase/supabase-js'
 import { alignToOptions, convertPage, isSkipped, MAPPINGS, mergeOptions, plain, type DbKey } from './convert.ts'
 import { download, extOf, shrink } from './images.ts'
+import { login } from './login.ts'
 import { createClient, loadEnv, mapLimit, type Page } from './notion.ts'
 import type { Collection, FieldValue, ImageRef } from '../../src/lib/types.ts'
 
@@ -20,28 +20,8 @@ const supabase = createSupabase(process.env.VITE_SUPABASE_URL!, process.env.VITE
   auth: { persistSession: false },
 })
 
-// ---------- ログイン（メールとパスワードはどこにも保存しない） ----------
-async function ask(question: string, hidden = false): Promise<string> {
-  const rl = createInterface({ input: process.stdin, output: process.stdout, terminal: true })
-  if (hidden) {
-    // 入力した文字を画面に出さない
-    const out = rl as unknown as { _writeToOutput: (s: string) => void }
-    out._writeToOutput = (s: string) => {
-      if (s.includes(question)) process.stdout.write(question)
-    }
-  }
-  const answer = await rl.question(question)
-  rl.close()
-  if (hidden) process.stdout.write('\n')
-  return answer.trim()
-}
-
-const email = await ask('記録アプリのメールアドレス：')
-const password = await ask('パスワード（入力しても表示されません）：', true)
-const { data: auth, error: authError } = await supabase.auth.signInWithPassword({ email, password })
-if (authError || !auth.user) throw new Error(`ログインできませんでした：${authError?.message}`)
-const userId = auth.user.id
-console.log('ログインしました')
+// ---------- ログイン ----------
+const { userId, ask } = await login(supabase)
 
 // ---------- 準備：コレクションと取り込み済みのページ ----------
 const { data: cols, error: colError } = await supabase

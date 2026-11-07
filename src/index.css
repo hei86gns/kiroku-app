@@ -313,3 +313,9 @@ button.addimg { font-family: inherit; }
 .dhero.pan .hero { cursor: grab; touch-action: none; user-select: none; -webkit-user-drag: none; }
 .dhero.pan .hero:active { cursor: grabbing; }
 .panreset { position: absolute; left: 12px; bottom: 12px; font-family: inherit; font-size: 11px; color: #fff; background: rgba(12, 13, 18, 0.55); border: 0; padding: 4px 10px; border-radius: 99px; backdrop-filter: blur(6px); }
+/* collection cover: the photo sits behind the name */
+.hero-h.withcover { position: relative; isolation: isolate; overflow: hidden; margin-top: 8px; border-radius: 24px; min-height: clamp(170px, 30vw, 260px); padding: 18px 20px; display: flex; flex-direction: column; justify-content: flex-end; box-shadow: var(--shadow); background: var(--paper-2); }
+.hero-h.withcover .ccover { position: absolute; inset: 0; z-index: -2; width: 100%; height: 100%; object-fit: cover; display: block; }
+.hero-h.withcover::before { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(to top, rgba(12, 13, 18, 0.62), rgba(12, 13, 18, 0.12) 55%, transparent); }
+.hero-h.withcover h1 { color: #fff; text-shadow: 0 1px 12px rgba(0, 0, 0, 0.3); }
+.hero-h.withcover .stats, .hero-h.withcover .stats b { color: rgba(255, 255, 255, 0.92); }

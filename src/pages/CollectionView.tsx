@@ -161,7 +161,8 @@ export default function CollectionView() {
   return (
     <>
       <TopLine label={c.en_name || c.name} />
-      <div className="hero-h">
+      <div className={`hero-h ${c.meta.cover ? 'withcover' : ''}`}>
+        {c.meta.cover && <Img image={c.meta.cover} className="ccover" />}
         <h1>{c.name}<span>.</span></h1>
         <Stats c={c} list={mine} all={records} />
       </div>
