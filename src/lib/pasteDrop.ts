@@ -29,20 +29,24 @@ async function readClipboardImages(): Promise<File[]> {
 }
 
 export const NO_IMAGE = 'コピーされた画像がありません。スクショは ⌘+control+shift+4 で撮るとコピーされます。'
+const NO_IMAGE_PHONE = 'コピーされた画像がありません。スクショを撮ったら左下の小さい画像 →「完了」→「コピーして削除」でコピーできます。'
 
 /** The 貼り付け button: reads the clipboard and hands the pictures over (or explains why not). */
 export async function pasteFromClipboard(onFiles: (files: File[]) => void, toast: (m: string) => void) {
   try {
     const files = await readClipboardImages()
     if (files.length) onFiles(files)
-    else toast(NO_IMAGE)
+    else toast(hasPointer() ? NO_IMAGE : NO_IMAGE_PHONE)
   } catch {
-    toast('ブラウザが貼り付けを許可しませんでした。⌘V でも貼り付けられます。')
+    toast(hasPointer() ? 'ブラウザが貼り付けを許可しませんでした。⌘V でも貼り付けられます。' : '貼り付けできませんでした。出てきた「ペースト」を押してください。')
   }
 }
 
-/** True on devices with a mouse/trackpad, where paste and drag-and-drop make sense. */
+/** True on devices with a mouse/trackpad, where ⌘V and drag-and-drop make sense. */
 export const hasPointer = () => window.matchMedia('(pointer: fine)').matches
+
+/** The 貼り付け button works here (PC and iPhone; iPhone asks with a 「ペースト」 bubble). */
+export const canPaste = () => typeof navigator.clipboard?.read === 'function'
 
 // Only the most recently mounted listener gets the paste (e.g. the capture sheet over a detail page).
 // An empty list means something other than a picture was pasted outside a text box.

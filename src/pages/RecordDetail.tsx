@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useApp } from '../context'
 import { asImages, coverOf, durationOf, fmtDate, maxSideFor, numbering, recordNo, subTextOf, tagsInUse } from '../lib/fields'
 import { prepareImages, toNewImages } from '../lib/image'
-import { hasPointer, NO_IMAGE, pasteFromClipboard, useDropImages, usePasteImages } from '../lib/pasteDrop'
+import { canPaste, hasPointer, NO_IMAGE, pasteFromClipboard, useDropImages, usePasteImages } from '../lib/pasteDrop'
 import type { FieldDef, FieldValue, ImageRef, KRecord } from '../lib/types'
 import { Header, Img, Pend } from '../components/common'
 import { FieldDisplay, FieldEditor } from '../components/FieldInputs'
@@ -46,7 +46,7 @@ function ImageStrip({ images, editing, onZoom, onChange, onAdd }: {
           <input type="file" accept="image/*" multiple hidden onChange={(e) => { onAdd([...(e.target.files ?? [])]); e.target.value = '' }} />
         </label>
       )}
-      {editing && hasPointer() && (
+      {editing && canPaste() && (
         <button type="button" className="addimg" onClick={() => void pasteFromClipboard(onAdd, toast)} title="コピーしたスクショをここに入れます（⌘V でも可）">
           <span><IcClip /><br />貼り付け</span>
         </button>
@@ -249,9 +249,11 @@ export default function RecordDetail({ recordId, startEditing, justSaved, onBack
             </>
           )}
           {busy && <p className="hint">縮小しています…</p>}
-          {editing && coverField && hasPointer() && (
+          {editing && coverField && (hasPointer() ? (
             <p className="hint">コピーしたスクショは各画像項目の「貼り付け」で入れられます（⌘V だけなら「{coverField.label}」へ）。ファイルはドラッグでも追加できます。</p>
-          )}
+          ) : canPaste() && (
+            <p className="hint">スクショは撮ったあと「コピーして削除」→ 入れたい項目の「貼り付け」で、アルバムを通さずに入れられます。</p>
+          ))}
           <div className="fields">{rows}</div>
           {editing && (
             <>

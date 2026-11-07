@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useApp } from '../context'
 import { maxSideFor, newId } from '../lib/fields'
 import { prepareImages, toNewImages, type PreparedImage } from '../lib/image'
-import { hasPointer, NO_IMAGE, pasteFromClipboard, useDropImages, usePasteImages } from '../lib/pasteDrop'
+import { canPaste, hasPointer, NO_IMAGE, pasteFromClipboard, useDropImages, usePasteImages } from '../lib/pasteDrop'
 import type { Collection, KRecord } from '../lib/types'
 import { CollectionIcon, IcCam, IcClip } from './Icons'
 
@@ -97,7 +97,7 @@ export default function CaptureSheet({ askCollection, onClose }: { askCollection
                 <IcCam />撮影 / 写真を選ぶ
                 <input type="file" accept="image/*" multiple onChange={(e) => { void pick([...(e.target.files ?? [])]); e.target.value = '' }} />
               </label>
-              {hasPointer() && (
+              {canPaste() && (
                 <button type="button" className="pickbtn paste" onClick={() => void pasteFromClipboard((l) => void pick(l), toast)}>
                   <IcClip />貼り付け
                 </button>
@@ -122,7 +122,9 @@ export default function CaptureSheet({ askCollection, onClose }: { askCollection
             ) : (
               <p className="hint" style={{ margin: '-4px 0 0' }}>
                 複数枚まとめて選べます。選んだ写真はこの場で自動的に縮小されます。
-                {hasPointer() && 'コピーしたスクショは「貼り付け」（または ⌘V）で、ファイルはここへドラッグでも入れられます。'}
+                {hasPointer()
+                  ? 'コピーしたスクショは「貼り付け」（または ⌘V）で、ファイルはここへドラッグでも入れられます。'
+                  : canPaste() && 'スクショは撮ったあと「コピーして削除」→「貼り付け」で、アルバムを通さずに入れられます。'}
               </p>
             )}
             <div>
